@@ -3,6 +3,8 @@
 
 # Quick start
 
+Put 'records25k_data.tsv' in the data directory.
+
 ## Create Conda environment (optional)
 ```bash
 conda create --name name-matching python=3.8
