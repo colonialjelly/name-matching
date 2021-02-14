@@ -30,7 +30,7 @@ def get_candidates_batch(X_input_names: np.ndarray,
         scores = euclidean_distances(X_input_names, X_source_names)
         sorted_scores_idx = np.argsort(scores, axis=1)[:, 1:num_candidates+1]
     else:
-        raise ValueError("Unrecognized distance type. Valid options: 'dot_product', 'cosine', 'euclidean'")
+        raise ValueError("Unrecognized similarity/distance type. Valid options: 'dot_product', 'cosine', 'euclidean'")
 
     if sorted_scores_idx is None:
         sorted_scores_idx = np.flip(np.argsort(scores, axis=1), axis=1)[:, 1:num_candidates+1]
