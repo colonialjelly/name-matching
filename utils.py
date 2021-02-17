@@ -1,6 +1,9 @@
+import pandas as pd
 import numpy as np
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+
+import constants
 
 
 def get_candidates_batch(X_input_names: np.ndarray,
@@ -42,3 +45,82 @@ def get_candidates_batch(X_input_names: np.ndarray,
     candidates = np.dstack((ranked_candidates, sorted_scores))
 
     return candidates
+
+
+def ndarray_to_exploded_df(candidates: np.ndarray, input_names: list, column_names: list):
+    """
+    Converts a 3d ndarray into an exploded pandas dataframe. Makes it easy to apply filters to the candidate set.
+    :param candidates: Generated candidates for the given input names with shape (m, n, r)
+    :param input_names: List of inputs names
+    :param column_names: List of column names for the created dataframe
+    :return: Pandas dataframe that has all the candidates in an exploded format
+    """
+    m, n, r = candidates.shape
+    exploded_np = np.column_stack((np.repeat(input_names, n),
+                                   candidates.reshape(m * n, -1)))
+    exploded_df = pd.DataFrame(exploded_np, columns=column_names)
+    return exploded_df
+
+
+# TODO: Documentation and type hints
+def convert_names_to_ids(names, char_to_idx_map, max_len):
+    def convert_name(name):
+        return [char_to_idx_map[c] for c in name]
+
+    names_ids = list(map(convert_name, names))
+    name_ids_chopped = [chop(name_id, max_len) for name_id in names_ids]
+    name_ids_padded = [post_pad_to_length(name_id, max_len) for name_id in name_ids_chopped]
+    return np.array(name_ids_padded)
+
+
+# TODO: Documentation and type hints
+def convert_ids_to_names(names_ids, idx_to_char_map):
+    def convert_input_ids(input_ids):
+        return ''.join([idx_to_char_map[input_id] for input_id in input_ids])
+
+    names = list(map(convert_input_ids, names_ids))
+    return np.array(names)
+
+
+# TODO: Documentation and type hints
+def post_pad_to_length(input_ids, length):
+    num_tokens = len(input_ids)
+    if num_tokens < length:
+        pad_width = length - num_tokens
+        return np.pad(input_ids, (0, pad_width), 'constant', constant_values=0)
+    return np.array(input_ids)
+
+
+# TODO: Documentation and type hints
+def one_hot_encode(X, vocab_length):
+    return np.eye(vocab_length)[X]
+
+
+# TODO: Documentation and type hints
+def chop(tokens, max_length):
+    if len(tokens) > max_length:
+        return tokens[:max_length]
+    return tokens
+
+
+# TODO: Documentation and type hints
+def build_token_idx_maps():
+    alphabet = list(constants.ALPHABET)
+    idx = range(1, len(alphabet) + 1)
+    char_to_idx_map = dict(zip(alphabet, idx))
+    idx_to_char_map = dict(zip(idx, alphabet))
+
+    char_to_idx_map[''] = 0
+    idx_to_char_map[0] = ''
+
+    return char_to_idx_map, idx_to_char_map
+
+
+# TODO: Documentation and type hints
+def remove_padding(name):
+    return name[1:-1]
+
+
+# TODO: Documentation and type hints
+def add_padding(name):
+    return constants.BEGIN_TOKEN + name + constants.END_TOKEN
