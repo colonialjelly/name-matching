@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 
-import constants
+from matchers import constant
 
 
 def get_candidates_batch(X_input_names: np.ndarray,
@@ -105,7 +105,7 @@ def chop(tokens, max_length):
 
 # TODO: Documentation and type hints
 def build_token_idx_maps():
-    alphabet = list(constants.ALPHABET)
+    alphabet = list(constant.ALPHABET)
     idx = range(1, len(alphabet) + 1)
     char_to_idx_map = dict(zip(alphabet, idx))
     idx_to_char_map = dict(zip(idx, alphabet))
@@ -123,4 +123,4 @@ def remove_padding(name):
 
 # TODO: Documentation and type hints
 def add_padding(name):
-    return constants.BEGIN_TOKEN + name + constants.END_TOKEN
+    return constant.BEGIN_TOKEN + name + constant.END_TOKEN

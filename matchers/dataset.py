@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
 
-import utils
+from matchers import utils
 
 
 def load_preprocess():
-    df = pd.read_csv('data/records25k_data.tsv', sep='\t', header=None)
+    df = pd.read_csv('../data/records25k_data.tsv', sep='\t', header=None)
     df.columns = ['name1', 'name2', 'co_occurrence', 'count1', 'count2']
     df.dropna(inplace=True)
 
