@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def precision_k(actual, candidates, k):
@@ -27,3 +28,20 @@ def recall_k(actual, candidates, k):
     if len(candidates) > k:
         candidates = candidates[:k]
     return len(set(actual).intersection(candidates)) / len(actual)
+
+
+def precision_recall(relevants, candidates, N):
+    precisions = []
+    recalls = []
+    for i in range(N):
+        precisions.append(np.mean([precision_k(a, c, i + 1) for a, c in zip(relevants, candidates)]))
+        recalls.append(np.mean([recall_k(a, c, i + 1) for a, c in zip(relevants, candidates)]))
+    return precisions, recalls
+
+
+def precision_recall_curve(relevants, candidates, N):
+    precisions, recalls = precision_recall(relevants, candidates, N)
+    plt.plot(recalls, precisions, 'ko--')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.show()
