@@ -19,6 +19,3 @@ def load_preprocess():
     all_candidates = np.array(df['name2'].unique())
 
     return input_names, relevant_names, all_candidates
-
-
-
