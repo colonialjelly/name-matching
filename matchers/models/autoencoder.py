@@ -1,40 +1,68 @@
 import torch
 import torch.nn as nn
+from tqdm import trange
+
+# NumPy has 64 by default, setting 64 on torch as well to avoid conflicts
+torch.set_default_dtype(torch.float64)
 
 
-class AE(nn.Module):
-    def __init__(self, input_size, hidden_size, output_dim, num_layers, vocab_size, seq_len):
-        super(AE, self).__init__()
+class AutoEncoder(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, seq_len):
+        super(AutoEncoder, self).__init__()
         self.seq_len = seq_len
-        self.output_dim = output_dim
-        self.vocab_size = vocab_size
         self.lstm_encoder = nn.LSTM(input_size=input_size,
                                     hidden_size=hidden_size,
                                     num_layers=num_layers,
-                                    bidirectional=True)
-        self.lstm_decoder = nn.LSTM(input_size=hidden_size*2,
-                                    hidden_size=hidden_size)
-        self.dense = nn.Linear(hidden_size, vocab_size)
-        self.softmax = nn.Softmax(dim=-1)
+                                    bidirectional=True,
+                                    batch_first=True)
+        self.lstm_decoder = nn.LSTM(input_size=hidden_size * 2,
+                                    hidden_size=hidden_size,
+                                    batch_first=True)
+        self.linear = nn.Linear(hidden_size, input_size)
 
-    def forward(self, x):
+    def forward(self, x, just_encoder=False):
         # Encode input
-        _, (hn, _) = self.lstm_encoder(x)
+        _, (x_encoded, _) = self.lstm_encoder(x)
 
         # Concatenate left-right hidden vectors
-        hn = torch.cat([hn[0], hn[1]], dim=1)
+        x_encoded = torch.cat([x_encoded[0], x_encoded[1]], dim=1)
 
-        # Reshape data to have seq_len time steps
-        hn = hn.unsqueeze(0).repeat(self.seq_len, 1, 1)
+        # After training is done we only need the encoded vectors
+        if just_encoder:
+            return x_encoded
+
+        # # Reshape data to have seq_len time steps
+        x_encoded = x_encoded.unsqueeze(1).repeat(1, self.seq_len, 1)
 
         # Decode the encoded input
-        output_decoder, (_, _) = self.lstm_decoder(hn)
+        x_decoded, (_, _) = self.lstm_decoder(x_encoded)
 
-        return self.softmax(self.dense(output_decoder))
-
-
+        return self.linear(x_decoded)
 
 
+def train_model(model, X_train, X_targets, num_epochs=100, batch_size=128):
+    optimizer = torch.optim.Adam(model.parameters())
+    loss_fn = torch.nn.CrossEntropyLoss()
 
+    dataset_train = torch.utils.data.TensorDataset(X_train, X_targets)
+    data_loader = torch.utils.data.DataLoader(dataset_train,
+                                              batch_size=batch_size,
+                                              shuffle=True)
 
+    with trange(num_epochs) as pbar:
+        for _ in pbar:
+            for i, (train_batch, labels_batch) in enumerate(data_loader):
+                # Clear out gradient
+                model.zero_grad()
 
+                # Compute forward pass
+                # Reshape output to match CrossEntropyLoss input
+                x_prime = model(train_batch).transpose(1, -1)
+
+                # Compute loss do the backward pass and update parameters
+                loss = loss_fn(x_prime, labels_batch)
+                loss.backward()
+                optimizer.step()
+
+            # Update loss value on progress bar
+            pbar.set_postfix(loss=loss.item())
