@@ -121,7 +121,18 @@ def add_padding(name: str):
     return constant.BEGIN_TOKEN + name + constant.END_TOKEN
 
 
+def convert_names_model_inputs(names: Union[list, np.ndarray], char_to_idx_map: dict, max_name_length: int):
+    X_targets = convert_names_to_ids(names, char_to_idx_map, max_name_length)
+    X_one_hot = one_hot_encode(X_targets, constant.VOCAB_SIZE + 1)
+
+    X_inputs = check_convert_tensor(X_one_hot)
+    X_targets = check_convert_tensor(X_targets)
+
+    return X_inputs, X_targets
+
+
 def check_convert_tensor(X: Union[np.ndarray, torch.Tensor]):
     if not torch.is_tensor(X):
         return torch.from_numpy(X)
     return X
+
