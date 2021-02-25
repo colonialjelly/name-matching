@@ -2,6 +2,7 @@ from typing import Union
 
 import pandas as pd
 import numpy as np
+import torch
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 
@@ -118,3 +119,9 @@ def remove_padding(name: str):
 
 def add_padding(name: str):
     return constant.BEGIN_TOKEN + name + constant.END_TOKEN
+
+
+def check_convert_tensor(X: Union[np.ndarray, torch.Tensor]):
+    if not torch.is_tensor(X):
+        return torch.from_numpy(X)
+    return X
