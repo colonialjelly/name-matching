@@ -1,5 +1,8 @@
+from typing import Union
+
 import pandas as pd
 import numpy as np
+import torch
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 
@@ -62,8 +65,7 @@ def ndarray_to_exploded_df(candidates: np.ndarray, input_names: list, column_nam
     return exploded_df
 
 
-# TODO: Documentation and type hints
-def convert_names_to_ids(names, char_to_idx_map, max_len):
+def convert_names_to_ids(names: np.ndarray, char_to_idx_map: dict, max_len: int):
     def convert_name(name):
         return [char_to_idx_map[c] for c in name]
 
@@ -73,8 +75,7 @@ def convert_names_to_ids(names, char_to_idx_map, max_len):
     return np.array(name_ids_padded)
 
 
-# TODO: Documentation and type hints
-def convert_ids_to_names(names_ids, idx_to_char_map):
+def convert_ids_to_names(names_ids: np.ndarray, idx_to_char_map: dict):
     def convert_input_ids(input_ids):
         return ''.join([idx_to_char_map[input_id] for input_id in input_ids])
 
@@ -82,8 +83,7 @@ def convert_ids_to_names(names_ids, idx_to_char_map):
     return np.array(names)
 
 
-# TODO: Documentation and type hints
-def post_pad_to_length(input_ids, length):
+def post_pad_to_length(input_ids: Union[list, np.ndarray], length: int):
     num_tokens = len(input_ids)
     if num_tokens < length:
         pad_width = length - num_tokens
@@ -91,19 +91,16 @@ def post_pad_to_length(input_ids, length):
     return np.array(input_ids)
 
 
-# TODO: Documentation and type hints
-def one_hot_encode(X, vocab_length):
+def one_hot_encode(X: np.ndarray, vocab_length: int):
     return np.eye(vocab_length)[X]
 
 
-# TODO: Documentation and type hints
-def chop(tokens, max_length):
+def chop(tokens: Union[list, np.ndarray], max_length: int):
     if len(tokens) > max_length:
         return tokens[:max_length]
     return tokens
 
 
-# TODO: Documentation and type hints
 def build_token_idx_maps():
     alphabet = list(constant.ALPHABET)
     idx = range(1, len(alphabet) + 1)
@@ -116,11 +113,26 @@ def build_token_idx_maps():
     return char_to_idx_map, idx_to_char_map
 
 
-# TODO: Documentation and type hints
-def remove_padding(name):
+def remove_padding(name: str):
     return name[1:-1]
 
 
-# TODO: Documentation and type hints
-def add_padding(name):
+def add_padding(name: str):
     return constant.BEGIN_TOKEN + name + constant.END_TOKEN
+
+
+def convert_names_model_inputs(names: Union[list, np.ndarray], char_to_idx_map: dict, max_name_length: int):
+    X_targets = convert_names_to_ids(names, char_to_idx_map, max_name_length)
+    X_one_hot = one_hot_encode(X_targets, constant.VOCAB_SIZE + 1)
+
+    X_inputs = check_convert_tensor(X_one_hot)
+    X_targets = check_convert_tensor(X_targets)
+
+    return X_inputs, X_targets
+
+
+def check_convert_tensor(X: Union[np.ndarray, torch.Tensor]):
+    if not torch.is_tensor(X):
+        return torch.from_numpy(X)
+    return X
+
