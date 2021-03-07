@@ -7,3 +7,4 @@ matplotlib~=3.3.4
 torch==1.7.1
 numpy~=1.19.2
 jellyfish~=0.8.2
+git+git://github.com/ztane/python-Levenshtein@07785f15#egg=python-Levenshtein
