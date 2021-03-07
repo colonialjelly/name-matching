@@ -70,6 +70,13 @@ def avg_precision_at_threshold(weighted_actuals, candidates, threshold):
     return np.mean(avg_precisions)
 
 
+def avg_recall_at_threshold(weighted_actuals, candidates, threshold):
+    avg_recalls = []
+    for a, c in zip(weighted_actuals, candidates):
+        avg_recalls.append(recall_at_threshold(a, c, threshold))
+    return np.mean(avg_recalls)
+
+
 def precision_recall_curve_at_threshold(weighted_actuals, candidates, min_threshold):
     show_precision_recall_curve(*precision_recall_at_threshold(weighted_actuals, candidates, min_threshold))
 
