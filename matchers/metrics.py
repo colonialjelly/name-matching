@@ -51,7 +51,7 @@ def show_precision_recall_curve(precisions, recalls):
 
 
 def precision_at_threshold(weighted_actual, candidate, threshold):
-    matches = candidate[candidate['score'] >= threshold]['name']
+    matches = candidate[candidate[:,1] >= threshold][:,0]
     num_matches = len(matches)
     if num_matches == 0:
         return 1.0
@@ -59,7 +59,7 @@ def precision_at_threshold(weighted_actual, candidate, threshold):
 
 
 def recall_at_threshold(weighted_actual, candidate, threshold):
-    matches = candidate[candidate['score'] >= threshold]['name']
+    matches = candidate[candidate[:,1] >= threshold][:,0]
     return sum(weight for name, weight in weighted_actual if name in matches)
 
 
@@ -68,6 +68,13 @@ def avg_precision_at_threshold(weighted_actuals, candidates, threshold):
     for a, c in zip(weighted_actuals, candidates):
         avg_precisions.append(precision_at_threshold(a, c, threshold))
     return np.mean(avg_precisions)
+
+
+def avg_recall_at_threshold(weighted_actuals, candidates, threshold):
+    avg_recalls = []
+    for a, c in zip(weighted_actuals, candidates):
+        avg_recalls.append(recall_at_threshold(a, c, threshold))
+    return np.mean(avg_recalls)
 
 
 def precision_recall_curve_at_threshold(weighted_actuals, candidates, min_threshold):
