@@ -55,12 +55,12 @@ def precision_at_threshold(weighted_actual, candidate, threshold):
     num_matches = len(matches)
     if num_matches == 0:
         return 1.0
-    return len(set(name for name, weight in weighted_actual).intersection(matches)) / num_matches
+    return len(set(name for name, weight, _ in weighted_actual).intersection(matches)) / num_matches
 
 
 def recall_at_threshold(weighted_actual, candidate, threshold):
     matches = candidate[candidate[:,1] >= threshold][:,0]
-    return sum(weight for name, weight in weighted_actual if name in matches)
+    return sum(weight for name, weight, _ in weighted_actual if name in matches)
 
 
 def avg_precision_at_threshold(weighted_actuals, candidates, threshold):
@@ -77,14 +77,14 @@ def avg_recall_at_threshold(weighted_actuals, candidates, threshold):
     return np.mean(avg_recalls)
 
 
-def precision_recall_curve_at_threshold(weighted_actuals, candidates, min_threshold):
-    show_precision_recall_curve(*precision_recall_at_threshold(weighted_actuals, candidates, min_threshold))
+def precision_recall_curve_at_threshold(weighted_actuals, candidates, min_threshold=0.5, max_threshold=1.0, step=0.01):
+    show_precision_recall_curve(*precision_recall_at_threshold(weighted_actuals, candidates, min_threshold, max_threshold, step))
 
 
-def precision_recall_at_threshold(weighted_actuals, candidates, min_threshold):
+def precision_recall_at_threshold(weighted_actuals, candidates, min_threshold=0.5, max_threshold=1.0, step=0.01):
     precisions = []
     recalls = []
-    for i in np.arange(min_threshold, 1.0, 0.01):
+    for i in np.arange(min_threshold, max_threshold, step):
         precisions.append(np.mean([precision_at_threshold(a, c, i) for a, c in zip(weighted_actuals, candidates)]))
         recalls.append(np.mean([recall_at_threshold(a, c, i) for a, c in zip(weighted_actuals, candidates)]))
     return precisions, recalls
