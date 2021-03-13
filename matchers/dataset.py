@@ -30,19 +30,25 @@ def load_process_from_disk():
 
 
 def process(df):
+    def divide_weighted_count_by_sum(df):
+        df['weighted_count'] /= df['weighted_count'].sum()
+        return df
+
     # Add padding
     df.loc[:, 'name1'] = df.loc[:, 'name1'].map(utils.add_padding)
     df.loc[:, 'name2'] = df.loc[:, 'name2'].map(utils.add_padding)
+    # return co-occurrence / sum(co-occurrences) and original co-occurrence count
+    df.loc[:, 'weighted_count'] = df.loc[:, 'co_occurrence']
 
     df = df.groupby(['name1', 'name2']) \
-        .agg({'co_occurrence': 'sum'}) \
+        .agg({'weighted_count': 'sum', 'co_occurrence': 'sum'}) \
         .groupby(level=0) \
-        .apply(lambda x: x / x.sum()) \
+        .apply(divide_weighted_count_by_sum) \
         .reset_index()
 
     df_name_matches = df.groupby('name1').agg(list).reset_index()
-    weighted_relevant_names = [[(n, w) for n, w in zip(ns, ws)] for ns, ws in
-                               zip(df_name_matches['name2'], df_name_matches['co_occurrence'])]
+    weighted_relevant_names = [[(n, w, c) for n, w, c in zip(ns, ws, cs)] for ns, ws, cs in
+            zip(df_name_matches['name2'], df_name_matches['weighted_count'], df_name_matches['co_occurrence'])]
     input_names = df_name_matches['name1'].tolist()
     all_candidates = np.array(df['name2'].unique())
 
