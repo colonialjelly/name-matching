@@ -1,5 +1,7 @@
 from typing import Union
 
+import heapq
+import jellyfish
 import pandas as pd
 import numpy as np
 import torch
@@ -121,6 +123,10 @@ def add_padding(name: str):
     return constant.BEGIN_TOKEN + name + constant.END_TOKEN
 
 
+def names_to_one_hot(names, char_to_idx_map, max_name_length):
+    return check_convert_tensor(one_hot_encode(convert_names_to_ids(names, char_to_idx_map, max_name_length), constant.VOCAB_SIZE + 1))
+
+
 def convert_names_model_inputs(names: Union[list, np.ndarray], char_to_idx_map: dict, max_name_length: int):
     X_targets = convert_names_to_ids(names, char_to_idx_map, max_name_length)
     X_one_hot = one_hot_encode(X_targets, constant.VOCAB_SIZE + 1)
@@ -136,3 +142,12 @@ def check_convert_tensor(X: Union[np.ndarray, torch.Tensor]):
         return torch.from_numpy(X)
     return X
 
+
+def get_k_near_negatives(name, positive_names, all_names, k):
+    similarities = {}
+    for cand_name in all_names:
+        if cand_name != name and cand_name not in positive_names:
+            dist = jellyfish.levenshtein_distance(name, cand_name)
+            similarity = 1 - (dist / max(len(name), len(cand_name)))
+            similarities[cand_name] = similarity
+    return heapq.nlargest(k, similarities.keys(), lambda n: similarities[n])

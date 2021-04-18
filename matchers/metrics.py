@@ -1,5 +1,7 @@
 import numpy as np
+import math
 import matplotlib.pyplot as plt
+import scipy
 
 
 def precision_k(actual, candidates, k):
@@ -88,3 +90,22 @@ def precision_recall_at_threshold(weighted_actuals, candidates, min_threshold=0.
         precisions.append(np.mean([precision_at_threshold(a, c, i) for a, c in zip(weighted_actuals, candidates)]))
         recalls.append(np.mean([recall_at_threshold(a, c, i) for a, c in zip(weighted_actuals, candidates)]))
     return precisions, recalls
+
+
+def get_auc(weighted_relevant_names_test, candidates, min_threshold=0.5, max_threshold=1.0, step=0.01):
+    precisions, recalls = precision_recall_at_threshold(weighted_relevant_names_test, candidates, min_threshold, max_threshold, step)
+    # take recall all the way to 0 with last precision so the curve starts at 0
+    precisions.append(precisions[-1])
+    recalls.append(0.0)
+    precs = []
+    recs = []
+    prev_r = 0
+    for p, r in zip(precisions, recalls):
+        if math.isclose(r, prev_r):
+            continue
+        precs.append(p)
+        recs.append(r)
+        prev_r = r
+    precs.reverse()
+    recs.reverse()
+    return scipy.integrate.simpson(precs, recs)
